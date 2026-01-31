@@ -1,0 +1,16 @@
+{
+  "name": "fura",
+  "version": "0.1.0",
+  "description": "Markdown to PDF converter",
+  "main": "src/index.js",
+  "scripts": {
+    "convert": "node src/index.js"
+  },
+  "keywords": ["markdown", "pdf", "converter"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "markdown-it": "^14.0.0",
+    "puppeteer": "^21.0.0"
+  }
+}
