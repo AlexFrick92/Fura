@@ -6,11 +6,15 @@
   "scripts": {
     "convert": "node src/index.js"
   },
-  "keywords": ["markdown", "pdf", "converter"],
+  "keywords": [
+    "markdown",
+    "pdf",
+    "converter"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "markdown-it": "^14.0.0",
-    "puppeteer": "^21.0.0"
+    "puppeteer": "^24.36.1"
   }
 }
