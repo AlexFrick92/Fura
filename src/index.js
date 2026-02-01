@@ -6,24 +6,32 @@ const puppeteer = require('puppeteer');
 const md = new MarkdownIt();
 
 async function convertMdToPdf(inputPath, outputPath, templatePath) {
+  console.log('Начинаю конвертацию...');
+
   // Читаем MD файл
+  console.log('Чтение markdown файла...');
   const markdownContent = fs.readFileSync(inputPath, 'utf-8');
 
   // Конвертируем MD в HTML
+  console.log('Конвертация MD → HTML...');
   const htmlContent = md.render(markdownContent);
 
   // Читаем HTML шаблон
+  console.log('Загрузка шаблона...');
   const template = fs.readFileSync(templatePath, 'utf-8');
 
   // Вставляем контент в шаблон
   const fullHtml = template.replace('{{content}}', htmlContent);
 
   // Генерируем PDF через Puppeteer
+  console.log('Запуск браузера...');
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
+  console.log('Загрузка контента в страницу...');
   await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
 
+  console.log('Генерация PDF...');
   await page.pdf({
     path: outputPath,
     format: 'A4',
