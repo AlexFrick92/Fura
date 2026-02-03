@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <style>
@@ -7,6 +8,7 @@
       size: A4;
       margin: 5mm 5mm 5mm 20mm;
     }
+
     body {
       font-family: 'Arial', sans-serif;
       font-size: 11pt;
@@ -15,48 +17,92 @@
       margin: 0;
       padding: 0;
     }
+
     .document-frame {
+      position: relative;
+      /* Set as positioning context for child elements */
       border: 2px solid #333;
-      padding: 1cm;
       min-height: calc(29.7cm - 10mm);
+      max-height: calc(29.7cm - 10mm);
       box-sizing: border-box;
     }
+
+    .content-area {
+      padding: 1cm;
+      padding-bottom: calc(1cm + 55mm);
+      /* Reserve space for the bottom rectangle */
+    }
+
+    .bottom-box {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 120mm;
+      height: 55mm;
+      border-top: 2px solid #333;
+      border-left: 2px solid #333;
+      box-sizing: border-box;
+    }
+
+    .bottom-company-box {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 50mm;
+      height: 15mm;
+      border-top: 2px solid #333;
+      border-left: 2px solid #333;
+    }
+
     h1 {
       font-size: 24pt;
       margin-top: 0;
     }
+
     h2 {
       font-size: 18pt;
       margin-top: 1em;
     }
+
     h3 {
       font-size: 14pt;
       margin-top: 1em;
     }
+
     p {
       margin: 0.5em 0;
     }
+
     code {
       background-color: #f4f4f4;
       padding: 2px 4px;
       border-radius: 3px;
       font-family: 'Courier New', monospace;
     }
+
     pre {
       background-color: #f4f4f4;
       padding: 10px;
       border-radius: 5px;
       overflow-x: auto;
     }
+
     pre code {
       background-color: transparent;
       padding: 0;
     }
   </style>
 </head>
+
 <body>
   <div class="document-frame">
-    {{content}}
+    <div class="content-area">
+      {{content}}
+    </div>
+    <div class="bottom-box">
+      <div class="bottom-company-box"></div>
+    </div>
   </div>
 </body>
+
 </html>
