@@ -5,23 +5,41 @@ const puppeteer = require('puppeteer');
 
 const md = new MarkdownIt();
 
-async function convertMdToPdf(inputPath, outputPath, templatePath) {
+async function convertMdToPdf(inputPaths, outputPath, templatePath) {
   console.log('Начинаю конвертацию...');
-
-  // Читаем MD файл
-  console.log('Чтение markdown файла...');
-  const markdownContent = fs.readFileSync(inputPath, 'utf-8');
-
-  // Конвертируем MD в HTML
-  console.log('Конвертация MD → HTML...');
-  const htmlContent = md.render(markdownContent);
 
   // Читаем HTML шаблон
   console.log('Загрузка шаблона...');
   const template = fs.readFileSync(templatePath, 'utf-8');
 
-  // Вставляем контент в шаблон
-  const fullHtml = template.replace('{{content}}', htmlContent);
+  // Извлекаем тело шаблона для создания страниц
+  const bodyMatch = template.match(/<body[^>]*>([\s\S]*)<\/body>/);
+  if (!bodyMatch) {
+    throw new Error('Invalid template: `<body>` tag not found.');
+  }
+  const pageTemplate = bodyMatch[1];
+  
+  const pagesHtml = [];
+  for (const inputPath of inputPaths) {
+      console.log(`Чтение markdown файла: ${path.basename(inputPath)}`);
+      const markdownContent = fs.readFileSync(inputPath, 'utf-8');
+      
+      console.log('Конвертация MD → HTML...');
+      const htmlContent = md.render(markdownContent);
+      
+      pagesHtml.push(pageTemplate.replace('{{content}}', htmlContent));
+  }
+
+  // Соединяем страницы, добавляя разрыв после каждой, кроме последней
+  const allPagesCombinedHtml = pagesHtml.map((pageHtml, index) => {
+    if (index < pagesHtml.length - 1) {
+      return `<div style="page-break-after: always;">${pageHtml}</div>`;
+    }
+    return `<div>${pageHtml}</div>`;
+  }).join('');
+
+  // Собираем итоговый HTML
+  const fullHtml = template.replace(pageTemplate, allPagesCombinedHtml);
 
   // Генерируем PDF через Puppeteer
   console.log('Запуск браузера...');
@@ -35,13 +53,7 @@ async function convertMdToPdf(inputPath, outputPath, templatePath) {
   await page.pdf({
     path: outputPath,
     format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '2cm',
-      right: '2cm',
-      bottom: '2cm',
-      left: '2cm'
-    }
+    printBackground: true
   });
 
   await browser.close();
@@ -53,15 +65,15 @@ async function convertMdToPdf(inputPath, outputPath, templatePath) {
 const args = process.argv.slice(2);
 
 if (args.length < 3) {
-  console.log('Использование: node src/index.js <input.md> <template.html> <output.pdf>');
+  console.log('Использование: node src/index.js <input1.md> [input2.md ...] <template.html> <output.pdf>');
   process.exit(1);
 }
 
-const inputPath = path.resolve(args[0]);
-const templatePath = path.resolve(args[1]);
-const outputPath = path.resolve(args[2]);
+const inputPaths = args.slice(0, -2).map(p => path.resolve(p));
+const templatePath = path.resolve(args[args.length - 2]);
+const outputPath = path.resolve(args[args.length - 1]);
 
-convertMdToPdf(inputPath, outputPath, templatePath).catch(err => {
+convertMdToPdf(inputPaths, outputPath, templatePath).catch(err => {
   console.error('Ошибка:', err);
   process.exit(1);
 });
