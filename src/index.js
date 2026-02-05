@@ -2,62 +2,106 @@ const fs = require('fs');
 const path = require('path');
 const MarkdownIt = require('markdown-it');
 const puppeteer = require('puppeteer');
+const cheerio = require('cheerio');
 
-const md = new MarkdownIt();
+const md = new MarkdownIt({ html: true });
+
+async function paginateContent(htmlContent, template, browser) {
+  console.log('Начинается разбиение контента на страницы...');
+  const pages = [];
+  const measurementPage = await browser.newPage();
+
+  // Устанавливаем пустой шаблон для измерения
+  const measurementContent = template.replace('{{content}}', '<div id="content-to-measure"></div>');
+  await measurementPage.setContent(measurementContent, { waitUntil: 'networkidle0' });
+
+  // Получаем максимальную высоту для контента
+      const maxHeight = await measurementPage.evaluate(() => {
+        const actualContentBlock = document.querySelector('.actual-content-block');
+        return actualContentBlock.clientHeight;
+      });  console.log(`Максимальная высота контента на странице: ${maxHeight}px`);
+
+  const $ = cheerio.load(htmlContent);
+  const elements = $('body').children().toArray();
+  
+  let currentPageElements = [];
+  for (const element of elements) {
+    currentPageElements.push($.html(element));
+    
+    const currentHtml = currentPageElements.join('');
+    
+    const currentHeight = await measurementPage.evaluate((html) => {
+      document.getElementById('content-to-measure').innerHTML = html;
+      return document.getElementById('content-to-measure').scrollHeight;
+    }, currentHtml);
+
+    if (currentHeight > maxHeight) {
+      console.log(`Контент превысил максимальную высоту, создается новая страница.`);
+      // Последний элемент не поместился, убираем его с текущей страницы
+      const lastElement = currentPageElements.pop();
+      // Сохраняем готовую страницу
+      pages.push(currentPageElements.join(''));
+      // Начинаем новую страницу с элемента, который не поместился
+      currentPageElements = [lastElement];
+    }
+  }
+
+  // Добавляем последнюю страницу, если на ней что-то есть
+  if (currentPageElements.length > 0) {
+    pages.push(currentPageElements.join(''));
+  }
+
+  await measurementPage.close();
+  console.log(`Контент разбит на ${pages.length} страниц.`);
+  return pages;
+}
 
 async function convertMdToPdf(inputPaths, outputPath, templatePath) {
   console.log('Начинаю конвертацию...');
-
-  // Читаем HTML шаблон
-  console.log('Загрузка шаблона...');
+  const browser = await puppeteer.launch({ headless: true });
+  
   const template = fs.readFileSync(templatePath, 'utf-8');
-
-  // Извлекаем тело шаблона для создания страниц
   const bodyMatch = template.match(/<body[^>]*>([\s\S]*)<\/body>/);
   if (!bodyMatch) {
+    await browser.close();
     throw new Error('Invalid template: `<body>` tag not found.');
   }
   const pageTemplate = bodyMatch[1];
-  
-  const pagesHtml = [];
+
+  let allFinalPages = [];
+
   for (const inputPath of inputPaths) {
-      console.log(`Чтение markdown файла: ${path.basename(inputPath)}`);
-      const markdownContent = fs.readFileSync(inputPath, 'utf-8');
-      
-      console.log('Конвертация MD → HTML...');
-      const htmlContent = md.render(markdownContent);
-      
-      pagesHtml.push(pageTemplate.replace('{{content}}', htmlContent));
-  }
-
-  // Соединяем страницы, добавляя разрыв после каждой, кроме последней
-  const allPagesCombinedHtml = pagesHtml.map((pageHtml, index) => {
-    if (index < pagesHtml.length - 1) {
-      return `<div style="page-break-after: always;">${pageHtml}</div>`;
+    console.log(`--- Обработка файла: ${path.basename(inputPath)} ---`);
+    const markdownContent = fs.readFileSync(inputPath, 'utf-8');
+    const htmlContent = md.render(markdownContent);
+    
+    const contentPages = await paginateContent(htmlContent, template, browser);
+    
+    for (const page of contentPages) {
+      allFinalPages.push(pageTemplate.replace('{{content}}', page));
     }
-    return `<div>${pageHtml}</div>`;
-  }).join('');
+  }
+  
+  const finalHtml = template.replace(
+    pageTemplate,
+    allFinalPages.map((pageHtml, index) => {
+      if (index < allFinalPages.length - 1) {
+        return `<div style="page-break-after: always;">${pageHtml}</div>`;
+      }
+      return `<div>${pageHtml}</div>`;
+    }).join('')
+  );
 
-  // Собираем итоговый HTML
-  const fullHtml = template.replace(pageTemplate, allPagesCombinedHtml);
-
-  // Генерируем PDF через Puppeteer
-  console.log('Запуск браузера...');
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-
-  console.log('Загрузка контента в страницу...');
-  await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-
-  console.log('Генерация PDF...');
-  await page.pdf({
+  console.log('Генерация итогового PDF...');
+  const pdfPage = await browser.newPage();
+  await pdfPage.setContent(finalHtml, { waitUntil: 'networkidle0' });
+  await pdfPage.pdf({
     path: outputPath,
     format: 'A4',
     printBackground: true
   });
 
   await browser.close();
-
   console.log(`PDF успешно создан: ${outputPath}`);
 }
 

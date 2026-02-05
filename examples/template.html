@@ -33,6 +33,12 @@
       /* Reserve space for the bottom rectangle */
     }
 
+    .actual-content-block {
+      height: 157mm; /* This is the fixed available height for content */
+      overflow: hidden; /* Prevent content from visibly overflowing during measurement */
+      box-sizing: border-box; /* Ensures height includes padding if any */
+    }
+
     .bottom-box {
       position: absolute;
       bottom: 0;
@@ -95,14 +101,15 @@
 </head>
 
 <body>
-  <div class="document-frame">
-    <div class="content-area">
-      {{content}}
-    </div>
-    <div class="bottom-box">
-      <div class="bottom-company-box"></div>
-    </div>
-  </div>
-</body>
+      <div class="document-frame">
+          <div class="content-area">
+              <div class="actual-content-block">
+                  {{content}}
+              </div>
+          </div>
+          <div class="bottom-box">
+              <div class="bottom-company-box"></div>
+          </div>
+      </div></body>
 
 </html>
