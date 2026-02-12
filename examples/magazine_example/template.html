@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Magazine Example</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Use viewport height */
+        }
+        .header, .footer {
+            background-color: #f2f2f2;
+            padding: 10px 20px;
+            flex-shrink: 0;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+        }
+        .footer {
+            border-top: 1px solid #ccc;
+            font-size: 0.8em;
+        }
+        .actual-content-block {
+            flex-grow: 1;
+            padding: 20px;
+            overflow: hidden; /* Important for measurement */
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>My Magazine - Repeating Header</h1>
+    </header>
+
+    <main class="actual-content-block">
+        {{ FURA:PAGINATE body.md }}
+    </main>
+
+    <footer class="footer">
+        <p>Author info: {{ author.md }}</p>
+        <p style="text-align: right;">Page</p>
+    </footer>
+</body>
+</html>

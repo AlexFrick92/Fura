@@ -1,16 +1,22 @@
-# Refactor CLI arguments
+# Refactor: Template-Driven Content Inclusion
 
 ## Overview
-Modify the `src/cli.js` file to support a new project-based command-line interface. Instead of explicitly providing input, template, and output paths, the user will provide a single path to a project directory. The tool will then discover the necessary files (`content.md`, `template.html`) and determine the output path (`<project_name>.pdf` in `output/`) based on a predefined convention. The old argument parsing method should be preserved for backward compatibility.
+The tool will be updated to support a "magazine-style" layout. The main `template.html` will be able to include multiple Markdown sources. A distinction will be made between small, static includes (`{{filename.md}}`) and one primary, paginated content block that flows across pages, which will use a special syntax: `{{ FURA:PAGINATE content.md }}`.
 
-## Step-by-step 
-1. Read the current `src/cli.js` to understand its argument parsing logic.
-2. Implement new logic in `src/cli.js` to handle a single argument as a project directory path.
-3. Within the project mode, derive `inputPaths` from `projectDir/content.md`.
-4. Within the project mode, derive `templatePath` from `projectDir/template.html`.
-5. Within the project mode, derive `outputPath` from `projectDir/output/<project_name>.pdf`.
-6. Ensure the old argument parsing logic for multiple file paths remains functional for backward compatibility.
-7. Update the usage message to explain both the project-based and file-based modes.
+## Step-by-step (Old Task Summary)
+*This section summarizes the previously completed refactoring.*
+1. Implemented a "project mode" in `src/cli.js`.
+2. Preserved backward compatibility for file-based arguments.
+
+## Step-by-step (New Task)
+1.  **Rework Core Logic in `index.js`:**
+    a. **Simple Includes:** First, find and replace all simple `{{*.md}}` placeholders in the template with their corresponding HTML content.
+    b. **Paginated Include:** Identify the single special placeholder `{{ FURA:PAGINATE *.md }}` and extract the path to the main markdown file.
+    c. **Content Preparation:** Read and convert the main markdown file to a single HTML string.
+    d. **Pagination:** Pass the main content HTML and the partially-resolved template to the `paginateContent` function.
+    e. **Final Assembly:** Stitch the resulting pages together with page breaks to create the final document.
+2.  **Adapt `paginator.js`:** Modify the `paginateContent` function. Instead of a hardcoded `{{content}}` placeholder, it must now accept the specific placeholder string (e.g., `{{ FURA:PAGINATE content.md }}`) that it needs to replace for its measurements.
+3.  **Testing:** Create a new example project with a template that includes both simple and paginated placeholders to verify the new, flexible layout logic.
 
 ## Progress
 

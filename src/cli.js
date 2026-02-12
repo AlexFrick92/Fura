@@ -7,16 +7,12 @@ function parseArgs(args) {
         const projectDir = path.resolve(args[0]);
 
         if (fs.existsSync(projectDir) && fs.lstatSync(projectDir).isDirectory()) {
-            const inputPath = path.join(projectDir, 'content.md');
             const templatePath = path.join(projectDir, 'template.html');
             const outputDir = path.join(projectDir, 'output');
             const projectName = path.basename(projectDir);
             const outputPath = path.join(outputDir, `${projectName}.pdf`);
 
-            if (!fs.existsSync(inputPath)) {
-                console.error(`Ошибка: Не найден content.md в директории проекта: ${projectDir}`);
-                process.exit(1);
-            }
+            // The entry point is now the template. We no longer look for content.md here.
             if (!fs.existsSync(templatePath)) {
                 console.error(`Ошибка: Не найден template.html в директории проекта: ${projectDir}`);
                 process.exit(1);
@@ -26,7 +22,8 @@ function parseArgs(args) {
                 fs.mkdirSync(outputDir, { recursive: true });
             }
 
-            return { inputPaths: [inputPath], templatePath, outputPath };
+            // Return an empty inputPaths array. The new logic will get includes from the template.
+            return { inputPaths: [], templatePath, outputPath };
         } else {
             console.error(`Ошибка: Директория проекта не найдена или не является директорией: ${args[0]}`);
             process.exit(1);

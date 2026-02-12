@@ -64,13 +64,13 @@ async function splitParagraph(paragraphHtml, maxHeight, measurementPage) {
     return resultParts;
 }
 
-async function paginateContent(htmlContent, template, browser) {
+async function paginateContent(htmlContent, template, browser, placeholder) {
   console.log('Начинается разбиение контента на страницы...');
   const pages = [];
   const measurementPage = await browser.newPage();
 
   // Устанавливаем пустой шаблон для измерения
-  const measurementContent = template.replace('{{content}}', '<div id="content-to-measure"></div>');
+  const measurementContent = template.replace(placeholder, '<div id="content-to-measure"></div>');
   await measurementPage.setContent(measurementContent, { waitUntil: 'networkidle0' });
 
   // Получаем максимальную высоту для контента
