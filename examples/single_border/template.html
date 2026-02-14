@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Magazine Example</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        .actual-content-block {
+            flex-grow: 1;   
+            height: 190mm; /* This is the fixed available height for content */
+        }
+    </style>
+</head>
+<body>
+    <div class="actual-content-block">
+        {{ FURA:PAGINATE spider-man.md }}
+    </div>
+</body>
+</html>
